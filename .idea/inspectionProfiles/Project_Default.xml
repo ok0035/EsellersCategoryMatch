@@ -1,6 +1,7 @@
 <component name="InspectionProjectProfileManager">
   <profile version="1.0">
     <option name="myName" value="Project Default" />
+<<<<<<< HEAD
     <inspection_tool class="PyPep8Inspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
       <option name="ignoredErrors">
         <list>
@@ -12,6 +13,12 @@
       <option name="ignoredIdentifiers">
         <list>
           <option value="command" />
+=======
+    <inspection_tool class="PyPep8NamingInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <option name="ignoredErrors">
+        <list>
+          <option value="N802" />
+>>>>>>> 8f4c16b2d5de0db2444944906ba27ac0ecb596f1
         </list>
       </option>
     </inspection_tool>
