@@ -1,84 +1,162 @@
-<<<<<<< HEAD
-# This is a sample Python script.
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
+import os
+# 엑셀 파일 읽기
 import xlrd
+import openpyxl
+# 엑셀 파일 생성
+from xlutils.copy import copy
+from xlwt import Workbook
+
+# Directory containing the Excel files
+coupang_path = '쿠팡'
+download_set_path = '세트'
 
 
 def main():
-    # Use a breakpoint in the code line below to debug your script.
-    # print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.breakpoint
+    # market_category_excel = load_excel("마켓카테고리매칭정보.xls")
 
-    category_excel_file = load_excel("원본상품등록양식Ver.1.0.4.1.xls")
-    market_category_excel = load_excel("마켓카테고리매칭정보.xls")
-    download_set = load_excel("D:\Mine\스마트스토어\이셀러스\ZSM_20230316_esellers.xls")
+    download_set = load_excel_xls(os.path.join(download_set_path, "ZSM_20230316_esellers.xls"))
+    download_set_default_sheet = download_set.sheet_by_name('기본정보')
 
-    # 이셀러스 카테고리 시트
-    esellers_category_sheet = category_excel_file.sheet_by_name("이셀러스표준카테고리")
+    wt_download_set: Workbook = copy(download_set)
+    extension_sheet = wt_download_set.get_sheet(1)
+
+
 
     # 마켓 카테고리 시트 (원하는 마켓으로 시트 선택)
-    market_category_sheet = market_category_excel.sheet_by_name("쿠팡")
+    # market_category_sheet = market_category_excel.sheet_by_name("쿠팡")
 
     # 다운로드 세트 확장정보
     # 이셀러스 카테고리 번호와 매칭되는 마켓 카테고리 번호를 여기에 저장
-    download_set_category = download_set.sheet_by_name("확장정보")
+
+    for row in range(download_set_default_sheet.nrows):
+        set_category_num: str = download_set_default_sheet.cell(row, 3).value
+        set_category_name = download_set_default_sheet.cell(row, 4).value
+        esellers_categories = findEsellersCategory(set_category_num)
+        esellers_category_name: str = ""
+
+        for category in esellers_categories:
+            esellers_category_name.join(category + ">")
+
+        coupang_category_num = getCoupangCategoryNumber(esellers_categories)
+        extension_sheet.write(row, 7, coupang_category_num)
+        print(set_category_num, "\t", set_category_name, "\t", esellers_category_name, " -> ", coupang_category_num)
+
+    wt_download_set.save("extension_category_set.xls")
 
     # Print the result
-    for row in range(esellers_category_sheet.nrows):
-        for col in range(esellers_category_sheet.ncols):
-            print(esellers_category_sheet.cell(row, col).value, end='\t')
-        print()
+    # for row in range(esellers_category_sheet.nrows):
+    #     for col in range(esellers_category_sheet.ncols):
+    #         print(esellers_category_sheet.cell(row, col).value, end='\t')
+    #     print()
 
     # A Excel 파일에서 B Excel파일로 값을 복사 붙여넣기 하는 법
     # value = sheetA["A1"].value
     # sheetB["C3"].value = value
 
 
-def load_excel(file):
+def findEsellersCategory(set_category_number: str) -> list:
+    category_excel_file = load_excel_xls("원본상품등록양식Ver.1.0.4.1.xls")
+    esellers_category_sheet = category_excel_file.sheet_by_name("이셀러스표준카테고리")
+    for row in range(esellers_category_sheet.nrows):
+        if set_category_number == esellers_category_sheet.cell(row, 0).value:
+            big_category: str = esellers_category_sheet.cell(row, 1).value
+            medium_category: str = esellers_category_sheet.cell(row, 2).value
+            small_category: str = esellers_category_sheet.cell(row, 3).value
+            detail_category: str = esellers_category_sheet.cell(row, 4).value
+            print("이셀러스 카테고리 ", set_category_number, big_category, medium_category, small_category, detail_category)
+            return [detail_category, small_category, medium_category, big_category]
+
+    return []
+
+
+def getCoupangCategoryNumber(esellers_cat_list: list) -> str:
+    path = os.path.join(coupang_path, 'union_coupang_category.xls')
+    if check_file_exists(path) is False:
+        print("쿠팡 통합 카테고리 엑셀 파일이 없습니다.")
+        create_coupang_category_file()
+
+    coupang_categories_file = load_excel_xls(os.path.join(coupang_path, 'union_coupang_category.xls'))
+    coupang_categories_sheet = coupang_categories_file.sheet_by_index(0)
+
+    print("이셀러스 카테고리 리스트 -> ", esellers_cat_list, coupang_categories_sheet.nrows)
+    e_category: str
+    for e_category in esellers_cat_list:
+        if e_category == "":
+            continue
+        elif '/' in e_category:
+            categories = e_category.split('/')
+            for index in range(len(categories), 0):
+                category: str = categories[index]
+                for row in range(coupang_categories_sheet.nrows):
+                    coupang_category = coupang_categories_sheet.cell(row, 1).value
+                    if category in coupang_category:
+                        print(esellers_cat_list, "\t\t -> \t\t", coupang_categories_sheet.cell(row, 1).value)
+                        return coupang_categories_sheet.cell(row, 0).value
+        else:
+            for row in range(coupang_categories_sheet.nrows):
+                coupang_category = coupang_categories_sheet.cell(row, 1).value
+                if e_category in coupang_category:
+                    print(esellers_cat_list, "\t\t -> \t\t", coupang_categories_sheet.cell(row, 1).value)
+                    return coupang_categories_sheet.cell(row, 0).value
+
+    return ""
+
+
+def create_coupang_category_file():
+    print("쿠팡 통합 카테고리 파일을 생성중입니다...")
+    # Create a new workbook
+
+    # 쿠팡 엑셀 파일 읽기
+    # Loop through all the Excel files in the directory
+    row = 0
+    # Create a new worksheet in the new workbook
+    union_coupang_category_file = xlwt.Workbook()
+    coupang_category_sheet = union_coupang_category_file.add_sheet("category")
+    for file_name in os.listdir(coupang_path):
+        print(file_name, "파일 통합 중...")
+        if file_name.endswith('.xls') or file_name.endswith('.xlsx'):
+            # Open the Excel file
+            workbook = load_excel_xlsx(os.path.join(coupang_path, file_name))
+            worksheet = workbook['data']
+
+            for cell in worksheet['A']:
+                value: str = cell.value
+                if value[0] == '[':
+                    categories = value.split(' ')
+                    if len(categories) >= 2:
+                        number = categories[0].replace('[', '').replace(']', '')
+                        category = categories[1]
+                        coupang_category_sheet.write(row, 0, number)
+                        coupang_category_sheet.write(row, 1, category)
+                        row += 1
+
+            # Loop through all the rows and columns in the worksheet
+    #         for row in range(worksheet.nrows):
+    #             # Copy the value from the old worksheet to the new worksheet
+
+    #
+    union_coupang_category_file.save(os.path.join(coupang_path, 'union_coupang_category.xls'))
+
+
+def check_file_exists(file_path):
+    if os.path.exists(file_path):
+        try:
+            xlrd.open_workbook(file_path)
+            return True
+        except xlrd.XLRDError:
+            return False
+    else:
+        return False
+
+
+def load_excel_xls(file):
     return xlrd.open_workbook(filename=file)
+
+
+def load_excel_xlsx(file):
+    return openpyxl.load_workbook(filename=file)
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     main()
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
-=======
-# 샘플 Python 스크립트입니다.
-
-# ⌃R을(를) 눌러 실행하거나 내 코드로 바꿉니다.
-# 클래스, 파일, 도구 창, 액션 및 설정을 어디서나 검색하려면 ⇧ 두 번을(를) 누릅니다.
-import openpyxl
-
-
-def print_hi(name):
-    # 스크립트를 디버그하려면 하단 코드 줄의 중단점을 사용합니다.
-    print(f'Hi, {name}')  # 중단점을 전환하려면 ⌘F8을(를) 누릅니다.
-
-
-def copyAndPasteCell():
-    # A파일 열기
-    wb1 = openpyxl.load_workbook('A.xlsx')
-    ws1 = wb1.active  # 첫 번째 시트 선택
-
-    # B파일 열기
-    wb2 = openpyxl.load_workbook('B.xlsx')
-    ws2 = wb2.active  # 첫 번째 시트 선택
-
-    # A파일의 a셀 값 읽기
-    value = ws1['a'].value
-
-    # B파일의 b셀에 값 쓰기
-    ws2['b'].value = value
-
-    # B파일 저장하기
-    wb2.save('B.xlsx')
-
-
-# 스크립트를 실행하려면 여백의 녹색 버튼을 누릅니다.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-    # https://www.jetbrains.com/help/pycharm/에서 PyCharm 도움말 참조
->>>>>>> 8f4c16b2d5de0db2444944906ba27ac0ecb596f1
