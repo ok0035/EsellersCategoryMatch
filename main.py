@@ -20,8 +20,6 @@ def main():
     wt_download_set: Workbook = copy(download_set)
     extension_sheet = wt_download_set.get_sheet(1)
 
-
-
     # 마켓 카테고리 시트 (원하는 마켓으로 시트 선택)
     # market_category_sheet = market_category_excel.sheet_by_name("쿠팡")
 
@@ -42,16 +40,6 @@ def main():
         print(set_category_num, "\t", set_category_name, "\t", esellers_category_name, " -> ", coupang_category_num)
 
     wt_download_set.save("extension_category_set.xls")
-
-    # Print the result
-    # for row in range(esellers_category_sheet.nrows):
-    #     for col in range(esellers_category_sheet.ncols):
-    #         print(esellers_category_sheet.cell(row, col).value, end='\t')
-    #     print()
-
-    # A Excel 파일에서 B Excel파일로 값을 복사 붙여넣기 하는 법
-    # value = sheetA["A1"].value
-    # sheetB["C3"].value = value
 
 
 def findEsellersCategory(set_category_number: str) -> list:
@@ -94,10 +82,16 @@ def getCoupangCategoryNumber(esellers_cat_list: list) -> str:
                         return coupang_categories_sheet.cell(row, 0).value
         else:
             for row in range(coupang_categories_sheet.nrows):
-                coupang_category = coupang_categories_sheet.cell(row, 1).value
-                if e_category in coupang_category:
-                    print(esellers_cat_list, "\t\t -> \t\t", coupang_categories_sheet.cell(row, 1).value)
-                    return coupang_categories_sheet.cell(row, 0).value
+                coupang_category_cell: str = coupang_categories_sheet.cell(row, 1).value
+                coupang_categories = coupang_category_cell.split(">")
+                coupang_category_index = len(coupang_categories) - 1
+                if coupang_category_index < 0:
+                    break
+                coupang_ca = coupang_categories[len(coupang_categories)-1]
+                if e_category in coupang_ca:
+                    if e_category in coupang_ca:
+                        print(esellers_cat_list, "\t\t -> \t\t", coupang_categories_sheet.cell(row, 1).value)
+                        return coupang_categories_sheet.cell(row, 0).value
 
     return ""
 
@@ -130,11 +124,6 @@ def create_coupang_category_file():
                         coupang_category_sheet.write(row, 1, category)
                         row += 1
 
-            # Loop through all the rows and columns in the worksheet
-    #         for row in range(worksheet.nrows):
-    #             # Copy the value from the old worksheet to the new worksheet
-
-    #
     union_coupang_category_file.save(os.path.join(coupang_path, 'union_coupang_category.xls'))
 
 
