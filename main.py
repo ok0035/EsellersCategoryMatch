@@ -42,6 +42,7 @@ def main():
     wt_download_set.save("extension_category_set.xls")
 
 
+# 이셀러스 카테고리 리스트 가져오기
 def findEsellersCategory(set_category_number: str) -> list:
     category_excel_file = load_excel_xls("원본상품등록양식Ver.1.0.4.1.xls")
     esellers_category_sheet = category_excel_file.sheet_by_name("이셀러스표준카테고리")
@@ -57,6 +58,7 @@ def findEsellersCategory(set_category_number: str) -> list:
     return []
 
 
+# 쿠팡 카테고리 번호
 def getCoupangCategoryNumber(esellers_cat_list: list) -> str:
     path = os.path.join(coupang_path, 'union_coupang_category.xls')
     if check_file_exists(path) is False:
@@ -96,6 +98,24 @@ def getCoupangCategoryNumber(esellers_cat_list: list) -> str:
     return ""
 
 
+def searchCategoryByCoupang(coupang_sheet: xlrd.sheet.Sheet):
+    assert isinstance(coupang_sheet, xlrd.sheet.Sheet)
+
+    for row in range(coupang_sheet.nrows):
+        coupang_category_cell: str = coupang_sheet.cell(row, 1).value
+        coupang_categories = coupang_category_cell.split(">")
+        coupang_category_index = len(coupang_categories) - 1
+        if coupang_category_index < 0:
+            break
+        coupang_ca = coupang_categories[len(coupang_categories) - 1]
+        if e_category in coupang_ca:
+            if e_category in coupang_ca:
+                print(esellers_cat_list, "\t\t -> \t\t", coupang_categories_sheet.cell(row, 1).value)
+                return coupang_categories_sheet.cell(row, 0).value
+
+
+
+# 쿠팡 통합 카테고리 파일 생성
 def create_coupang_category_file():
     print("쿠팡 통합 카테고리 파일을 생성중입니다...")
     # Create a new workbook
@@ -127,6 +147,7 @@ def create_coupang_category_file():
     union_coupang_category_file.save(os.path.join(coupang_path, 'union_coupang_category.xls'))
 
 
+# 통합 카테고리 파일이 존재하는지 확인
 def check_file_exists(file_path):
     if os.path.exists(file_path):
         try:
@@ -138,10 +159,12 @@ def check_file_exists(file_path):
         return False
 
 
+# xls 파일 열기
 def load_excel_xls(file):
     return xlrd.open_workbook(filename=file)
 
 
+# xlsx 파일 열기
 def load_excel_xlsx(file):
     return openpyxl.load_workbook(filename=file)
 
