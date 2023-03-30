@@ -69,50 +69,46 @@ def getCoupangCategoryNumber(esellers_cat_list: list) -> str:
     coupang_categories_sheet = coupang_categories_file.sheet_by_index(0)
 
     print("이셀러스 카테고리 리스트 -> ", esellers_cat_list, coupang_categories_sheet.nrows)
-    e_category: str
-    for e_category in esellers_cat_list:
-        if e_category == "":
-            continue
-        elif '/' in e_category:
-            categories = e_category.split('/')
-            for index in range(len(categories), 0):
-                category: str = categories[index]
-                for row in range(coupang_categories_sheet.nrows):
-                    coupang_category = coupang_categories_sheet.cell(row, 1).value
-                    if category in coupang_category:
-                        print(esellers_cat_list, "\t\t -> \t\t", coupang_categories_sheet.cell(row, 1).value)
-                        return coupang_categories_sheet.cell(row, 0).value
-        else:
-            for row in range(coupang_categories_sheet.nrows):
-                coupang_category_cell: str = coupang_categories_sheet.cell(row, 1).value
-                coupang_categories = coupang_category_cell.split(">")
-                coupang_category_index = len(coupang_categories) - 1
-                if coupang_category_index < 0:
-                    break
-                coupang_ca = coupang_categories[len(coupang_categories)-1]
-                if e_category in coupang_ca:
-                    if e_category in coupang_ca:
-                        print(esellers_cat_list, "\t\t -> \t\t", coupang_categories_sheet.cell(row, 1).value)
-                        return coupang_categories_sheet.cell(row, 0).value
-
-    return ""
+    return searchCategoryByCoupang(esellers_cat_list, coupang_categories_sheet)
 
 
-def searchCategoryByCoupang(coupang_sheet: xlrd.sheet.Sheet):
+def searchCategoryByCoupang(esellers_cat_list: list, coupang_sheet: xlrd.sheet.Sheet) -> str:
     assert isinstance(coupang_sheet, xlrd.sheet.Sheet)
 
-    for row in range(coupang_sheet.nrows):
-        coupang_category_cell: str = coupang_sheet.cell(row, 1).value
-        coupang_categories = coupang_category_cell.split(">")
-        coupang_category_index = len(coupang_categories) - 1
-        if coupang_category_index < 0:
-            break
-        coupang_ca = coupang_categories[len(coupang_categories) - 1]
-        if e_category in coupang_ca:
-            if e_category in coupang_ca:
-                print(esellers_cat_list, "\t\t -> \t\t", coupang_categories_sheet.cell(row, 1).value)
-                return coupang_categories_sheet.cell(row, 0).value
+    # 이셀러스 카테고리 리스트를 소분류부터 사용하기 위해 역순으로 인덱스를 가져옴
+    for e_index in range(len(esellers_cat_list) - 1, 0, -1):
+        e_category: str = esellers_cat_list[e_index]
+        e_categories: list = e_category.split("/")
+        is_exist = True  # 검색할 카테고리가 존재하는지 확인
+        for category in e_categories:
+            i = 1  # 쿠팡 카테고리와 이셀러스 카테고리가 일치하는지 소분류부터 검색
+            while True:
 
+                for row in range(coupang_sheet.nrows):
+                    coupang_category_cell: str = coupang_sheet.cell(row, 1).value
+                    coupang_categories = coupang_category_cell.split(">")
+                    coupang_category_index = len(coupang_categories) - i
+
+                    is_exist = False
+                    if coupang_category_index < 0:
+                        continue
+
+                    is_exist = True
+                    coupang_ca: str = coupang_categories[coupang_category_index]
+
+                    # 소 분류 카테고리가 /로 나누어져 있을 경우 하나씩 검색
+                    split_categories = coupang_ca.split("/")
+
+                    for coupang_category in split_categories:
+                        if category in coupang_category:
+                            print(esellers_cat_list, "\t\t -> \t\t", coupang_category_cell)
+                            return coupang_sheet.cell(row, 0).value
+
+                if not is_exist:
+                    break
+
+                i = i + 1
+    return ""
 
 
 # 쿠팡 통합 카테고리 파일 생성
