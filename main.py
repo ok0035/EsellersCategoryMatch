@@ -89,25 +89,32 @@ def searchCategoryByCoupang(esellers_cat_list: list, coupang_sheet: xlrd.sheet.S
         match_count = 0
 
         for c_category_index in range(len(coupang_categories)-1, 0, -1):
-            c_category = coupang_categories[c_category_index]
-            assert isinstance(c_category, str)
+            c_categories = coupang_categories[c_category_index]
+            c_split_categories = c_categories.split("/")
+            for c_category in c_split_categories:
 
-            for e_category_index in range(0, len(esellers_cat_list)-1, 1):
-                e_categories = esellers_cat_list[e_category_index]
-                assert isinstance(e_categories, str)
-                bonus_point = abs(e_category_index - c_category_index) * abs(e_category_index - c_category_index)
-                categories = e_categories.split("/")
+                assert isinstance(c_category, str)
 
-                for e_category_split_index in range(0, len(categories)):
-                    e_category = categories[e_category_split_index]
-                    # bonus_point += len(categories) - e_category_split_index
-                    if e_category == "":
-                        continue
-                    if e_category in c_category:
-                        # print(c_category, "안에 ", e_category, "가 존재하여 포인트 1점 획득")
-                        match_count = match_count + bonus_point + 5
-                    else:
-                        match_count = match_count - 1
+                for e_category_index in range(0, len(esellers_cat_list)-1, 1):
+                    e_categories = esellers_cat_list[e_category_index]
+                    assert isinstance(e_categories, str)
+                    bonus_point = abs(e_category_index - c_category_index) * abs(e_category_index - c_category_index)
+                    categories = e_categories.split("/")
+
+                    for e_category_split_index in range(0, len(categories)):
+                        e_category = categories[e_category_split_index]
+                        if e_category == "":
+                            continue
+
+                        if e_category == c_categories:
+                            match_count += bonus_point + 40
+                        elif e_category == c_category:
+                            match_count += bonus_point + 15
+                        elif e_category in c_category:
+                            # print(c_category, "안에 ", e_category, "가 존재하여 포인트 1점 획득")
+                            match_count += bonus_point + 3
+                        else:
+                            match_count -= 1
 
         if match_count > max_count:
             print(match_count, "포인트를 획득하여", match_category, "에서 ", coupang_sheet.cell(row, 1).value, "로 변경되었습니다.")
