@@ -69,6 +69,7 @@ def getCoupangCategoryNumber(esellers_cat_list: list) -> str:
     coupang_categories_sheet = coupang_categories_file.sheet_by_index(0)
 
     # print("이셀러스 카테고리 리스트 -> ", esellers_cat_list, coupang_categories_sheet.nrows)
+    esellers_cat_list.reverse()
     return searchCategoryByCoupang(esellers_cat_list, coupang_categories_sheet)
 
 
@@ -88,17 +89,17 @@ def searchCategoryByCoupang(esellers_cat_list: list, coupang_sheet: xlrd.sheet.S
 
         match_count = 0
 
-        for c_category_index in range(len(coupang_categories)-1, 0, -1):
+        for c_category_index in range(len(coupang_categories)):
             c_categories = coupang_categories[c_category_index]
             c_split_categories = c_categories.split("/")
             for c_category in c_split_categories:
 
                 assert isinstance(c_category, str)
 
-                for e_category_index in range(0, len(esellers_cat_list)-1, 1):
+                for e_category_index in range(len(esellers_cat_list)):
                     e_categories = esellers_cat_list[e_category_index]
                     assert isinstance(e_categories, str)
-                    bonus_point = abs(e_category_index - c_category_index) * abs(e_category_index - c_category_index)
+                    bonus_point = pow(abs(e_category_index + c_category_index), 2)
                     categories = e_categories.split("/")
 
                     for e_category_split_index in range(0, len(categories)):
@@ -109,9 +110,8 @@ def searchCategoryByCoupang(esellers_cat_list: list, coupang_sheet: xlrd.sheet.S
                         if e_category == c_categories:
                             match_count += bonus_point + 40
                         elif e_category == c_category:
-                            match_count += bonus_point + 15
+                            match_count += bonus_point + 20
                         elif e_category in c_category:
-                            # print(c_category, "안에 ", e_category, "가 존재하여 포인트 1점 획득")
                             match_count += bonus_point + 3
                         else:
                             match_count -= 1
