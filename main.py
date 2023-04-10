@@ -26,7 +26,7 @@ def main():
     # 다운로드 세트 확장정보
     # 이셀러스 카테고리 번호와 매칭되는 마켓 카테고리 번호를 여기에 저장
 
-    for row in range(download_set_default_sheet.nrows):
+    for row in range(2, download_set_default_sheet.nrows):
         set_category_num: str = download_set_default_sheet.cell(row, 3).value
         set_category_name = download_set_default_sheet.cell(row, 4).value
         esellers_categories = findEsellersCategory(set_category_num)
@@ -125,7 +125,7 @@ def searchCategoryByCoupang(esellers_cat_list: list, coupang_sheet: xlrd.sheet.S
     print("최종으로 매칭된 카테고리 : ", esellers_cat_list,  " -> ", match_category, match_category_num)
     print("================================================================================================================================")
 
-    return match_category
+    return match_category_num
 
 
     # 이셀러스 카테고리 리스트를 소분류부터 사용하기 위해 역순으로 인덱스를 가져옴
